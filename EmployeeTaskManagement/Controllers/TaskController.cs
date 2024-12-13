@@ -18,8 +18,9 @@ namespace EmployeeTaskManagement.Controllers
             {
                 _context = context;
             }
-
+            
             [HttpGet]
+            [Authorize]
             public IActionResult GetAllTasks()
             {
                 // This endpoint is accessible only by authenticated users

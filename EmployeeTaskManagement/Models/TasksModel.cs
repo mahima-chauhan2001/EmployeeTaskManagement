@@ -10,12 +10,19 @@ namespace EmployeeTaskManagement.Models
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string? Status { get; set; }
-        public string? AssignedFromId { get; set; } // Foreign key for the user who assigned the task
-        public IdentityUser? AssignedFrom { get; set; }  // Navigation property to the user who assigned the task
+        public int? AssignedFromId { get; set; } // Foreign key for the user who assigned the task
+        public UserModel? AssignedFrom { get; set; }  // Navigation property to the user who assigned the task
 
-        public string? AssignedToId { get; set; } // Foreign key for the assigned user
-        public IdentityUser? AssignedTo { get; set; }
+        public int? AssignedToId { get; set; } // Foreign key for the assigned user
+        public UserModel? AssignedTo { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime DueDate { get; set; }
     }
 }
+//var tasksAssignedToUser = context.Tasks
+//    .Where(t => t.AssignedToId == userId)  // Get tasks where user is the assignee
+//    .ToList();
+
+//var tasksAssignedByUser = context.Tasks
+//    .Where(t => t.AssignedFromId == userId)  // Get tasks where user is the one who assigned the task
+//    .ToList();

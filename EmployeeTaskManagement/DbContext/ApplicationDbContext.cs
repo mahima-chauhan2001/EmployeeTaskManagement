@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeTaskManagement.DbContext
 {
-    public class ApplicationDbContext : IdentityDbContext<IdentityUser>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        public ApplicationDbContext(DbContextOptions options) : base (options) 
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base (options) 
         { 
 
         }
@@ -16,8 +16,7 @@ namespace EmployeeTaskManagement.DbContext
 
         public DbSet<Roles> Roles { get; set; }
 
-        public DbSet<UserModel> UserModels { get; set; }
-        public DbSet<LoginModel> LoginModels { get; set; }
+        public DbSet<UserModel> UserModels { get; set; } 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -41,6 +40,8 @@ namespace EmployeeTaskManagement.DbContext
 
             modelBuilder.Entity<UserModel>().HasKey(t => t.UserId); 
             
-        } 
+        }
+         
     }
 }
+    
