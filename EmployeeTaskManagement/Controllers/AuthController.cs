@@ -55,7 +55,7 @@ public class AuthController : ControllerBase
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return Ok(new { message = "Login successful for admin, token generated", Token = tokenHandler.WriteToken(token) , Role = roles });
+            return Ok(new { message = "Login successful for admin, token generated", Token = tokenHandler.WriteToken(token) , Role = roles, AssignedFromId = user.UserId  });
        // }
 
        // return Ok(new { message = "Login successful for employee, no token generated" , Role = roles });

@@ -25,7 +25,7 @@ namespace EmployeeTaskManagement.Controllers
             _authorizationService = authorizationService;
         }
 
-        [Authorize(Roles = "Admin")]       
+        [Authorize]       
         [HttpGet("GetTasks")]    
         //[Route("api/[controller]")]
         public async Task<IActionResult> GetAllTasks()
@@ -38,6 +38,7 @@ namespace EmployeeTaskManagement.Controllers
         [HttpPost("admin/createTasks")]
         public async Task<IActionResult> CreateTask([FromBody] TasksModel task)
         {
+            UserModel assignedFromUser = null;
             if (task == null)
             {
                 return BadRequest("Task data is required.");
@@ -48,11 +49,11 @@ namespace EmployeeTaskManagement.Controllers
                 return BadRequest("Title and Description are required.");
             }
 
-            // Validate AssignedFromId and AssignedToId
-            //if (task.AssignedFromId == 0)
-            //{
-            //    return BadRequest("AssignedFromId is required.");
-            //}
+           // Validate AssignedFromId and AssignedToId
+            if (task.AssignedFromId == 0)
+            {
+                return BadRequest("AssignedFromId is required.");
+            }
 
             //if (task.AssignedToId == 0)
             //{
@@ -60,14 +61,18 @@ namespace EmployeeTaskManagement.Controllers
             //}
 
             // Check if the admin user with AssignedFromId exists
-            //var assignedFromUser = await _context.UserModels
-            //                                      .Where(u => u.UserId == task.AssignedFromId && u.Role == "Admin")
-            //                                      .FirstOrDefaultAsync();
+            if (task.AssignedFromId != null  )
+            {
+                  assignedFromUser = await _context.UserModels
+                                                 .Where(u => u.UserId == task.AssignedFromId && u.Role == "Admin")
+                                                 .FirstOrDefaultAsync();
+            }
+           
 
-            //if (assignedFromUser == null)
-            //{
-            //    return BadRequest("AssignedFrom user (admin) not found.");
-            //}
+            if (assignedFromUser == null)
+            {
+                return BadRequest("AssignedFrom user (admin) not found.");
+            }
             //var assignedToUser = await _context.UserModels
             //                              .FirstOrDefaultAsync(u => u.FirstName == task.AssignedTo.FirstName &&
             //                                                        u.LastName == task.AssignedTo.LastName &&
@@ -80,7 +85,7 @@ namespace EmployeeTaskManagement.Controllers
             //}
 
             //// Populate task with the users (AssignedFrom and AssignedTo)
-            //task.AssignedFrom = assignedFromUser;
+            task.AssignedFrom = assignedFromUser;
             //task.AssignedTo = assignedToUser;
 
             // Set CreatedDate and DueDate if not already set
@@ -117,6 +122,7 @@ namespace EmployeeTaskManagement.Controllers
             task.Title = taskUpdate.Title ?? task.Title;   
             task.Description = taskUpdate.Description ?? task.Description;
             task.Status = taskUpdate.Status ?? task.Status;
+            task.AssignedFromId = taskUpdate.AssignedFromId ?? task.AssignedFromId;
             task.AssignedToId = taskUpdate.AssignedToId ?? task.AssignedToId;
              
             await _context.SaveChangesAsync();
