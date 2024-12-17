@@ -21,8 +21,7 @@ namespace EmployeeTaskManagement.CommonService
             var roles = new[] { "Admin", "Employee" }; // Define your roles here
 
             foreach (var roleName in roles)
-            {
-                // Check if role already exists in the Roles table
+            { 
                 var roleExist = await _context.Roles
                     .AnyAsync(r => r.Name == roleName);
 
@@ -31,24 +30,11 @@ namespace EmployeeTaskManagement.CommonService
                     // Create and add the new role
                     var role = new Roles { Name = roleName };
                     await _context.Roles.AddAsync(role);
-                    await _context.SaveChangesAsync(); // Save changes to the database
+                    await _context.SaveChangesAsync(); 
                 }
             }
         }
 
-
-        //public async Task AssignRoleToUser(IdentityUser user, string role)
-        //{
-        //    var result = await _userManager.AddToRoleAsync(user, role);
-
-        //    if (result.Succeeded)
-        //    {
-        //        return result;
-        //    }
-        //    else
-        //    {
-        //        // Handle failure
-        //    }
-        //}
+ 
     }
 }

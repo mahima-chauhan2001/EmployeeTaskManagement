@@ -1,5 +1,6 @@
 ﻿using EmployeeTaskManagement.DbContext;
 using EmployeeTaskManagement.Models;
+using EmployeeTaskManagement.Services.UserService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -12,17 +13,18 @@ namespace EmployeeTaskManagement.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        public EmployeeController(ApplicationDbContext context)
+        private readonly IUserService _userService;
+        public EmployeeController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
         [HttpGet("GetUsers")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<ActionResult<UserModel>> GetUsers()
         {
-            return Ok(await _context.UserModels.ToListAsync());
+            var users = await _userService.GetUsersAsync();
+            return Ok(users);
         }
 
         [HttpPost("CreateEmployee")]
@@ -33,45 +35,44 @@ namespace EmployeeTaskManagement.Controllers
             {
                 return BadRequest(new { message = "User data is required." });
             }
-
-            _context.UserModels.Add(userModel);
-            await _context.SaveChangesAsync();
+            await _userService.CreateEmployeeAsync(userModel);
 
             return Ok(new { message = "Task updated successfully", userModel });
         }
 
         [HttpPut("UpdateEmployee")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<UserModel>> UpdateEmployee(int Userid, [FromBody] UserModel userModel)
+        public async Task<ActionResult<UserModel>> UpdateEmployee(int userId, [FromBody] UserModel userModel)
         {
             if (userModel == null)
             {
                 return BadRequest(new { message = "User data not found" });
             }
-            var user = await _context.UserModels.Where(x => x.UserId == Userid).FirstOrDefaultAsync();
+            var updatedUser = await _userService.UpdateEmployeeAsync(userId, userModel);
+            if (updatedUser == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
 
-            user.Email = userModel.Email;
-            user.FirstName = userModel.FirstName;
-            user.LastName = userModel.LastName;
-            user.Role = userModel.Role;
-             
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Task updated successfully", user });
+            return Ok(new { message = "User updated successfully", user = updatedUser }); 
         }
 
         [HttpDelete("DeleteEmployee")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> DeleteEmployee(int Userid)
-        {           
-            var user = await _context.UserModels.Where(x=> x.UserId == Userid).FirstOrDefaultAsync();
-            if (user == null)
+        public async Task<ActionResult> DeleteEmployee([FromQuery] int userId)
+        {
+            if (userId <= 0)
+            {
+                return BadRequest(new { message = "Invalid user ID" });
+            }
+            var result = await _userService.DeleteEmployeeAsync(userId);
+
+            if (result == null)
             {
                 return BadRequest(new { message = "User data not found" });
             }
-            var u = await _context.UserModels.FindAsync(Userid);
-            _context.UserModels.Remove(user);
-
-            return Ok(new { message = "successfully deleted" });
+            return Ok(new { message = "User successfully deleted" });
+             
         }
     }
 }

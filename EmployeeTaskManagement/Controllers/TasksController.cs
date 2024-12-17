@@ -1,108 +1,99 @@
-﻿using Azure;
-using EmployeeTaskManagement.DbContext;
+﻿using Azure; 
 using EmployeeTaskManagement.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using EmployeeTaskManagement.Services.TaskService;
+using Microsoft.AspNetCore.Authorization; 
+using Microsoft.AspNetCore.Mvc; 
 
 namespace EmployeeTaskManagement.Controllers
 { 
     //[Route("api/[controller]")]
     [ApiController]
     public class TasksController : ControllerBase
-    { 
-        private readonly ApplicationDbContext _context;
-        private readonly IAuthorizationService _authorizationService;
-        public TasksController(ApplicationDbContext context, IAuthorizationService authorizationService)
-        {  
-            _context = context;
-            _authorizationService = authorizationService;
-        }
+    {  
+        private readonly ITaskService _taskService; 
+        public TasksController(ITaskService taskService)
+        {
+            _taskService = taskService;
+        }   
 
         [Authorize]       
         [HttpGet("GetTasks")]    
         //[Route("api/[controller]")]
         public async Task<IActionResult> GetAllTasks()
-        {          
-            var tasks = _context.Tasks.ToList();
+        {
+            var tasks = await _taskService.GetAllTasksAsync();
             return Ok(tasks);
+             
         } 
 
         [Authorize(Roles = "Admin")]
         [HttpPost("admin/createTasks")]
         public async Task<IActionResult> CreateTask([FromBody] TasksModel task)
         {
-            UserModel assignedFromUser = null;
             if (task == null)
             {
                 return BadRequest("Task data is required.");
             }
-
-            if (string.IsNullOrWhiteSpace(task.Title) || string.IsNullOrWhiteSpace(task.Description))
+            var createdTask = await _taskService.CreateTaskAsync(task);
+            if (createdTask == null)
             {
-                return BadRequest("Title and Description are required.");
+                return BadRequest("Error while creating the task.");
             }
+            return CreatedAtAction(nameof(CreateTask), new { id = createdTask.Id }, createdTask);
 
-           // Validate AssignedFromId and AssignedToId
-            if (task.AssignedFromId == 0)
-            {
-                return BadRequest("AssignedFromId is required.");
-            }
-
-            //if (task.AssignedToId == 0)
+            //UserModel assignedFromUser = null;
+            //if (task == null)
             //{
-            //    return BadRequest("AssignedToId is required.");
+            //    return BadRequest("Task data is required.");
             //}
 
-            // Check if the admin user with AssignedFromId exists
-            if (task.AssignedFromId != null  )
-            {
-                  assignedFromUser = await _context.UserModels
-                                                 .Where(u => u.UserId == task.AssignedFromId && u.Role == "Admin")
-                                                 .FirstOrDefaultAsync();
-            }
-           
-
-            if (assignedFromUser == null)
-            {
-                return BadRequest("AssignedFrom user (admin) not found.");
-            }
-            //var assignedToUser = await _context.UserModels
-            //                              .FirstOrDefaultAsync(u => u.FirstName == task.AssignedTo.FirstName &&
-            //                                                        u.LastName == task.AssignedTo.LastName &&
-            //                                                        u.Email == task.AssignedTo.Email && u.UserId == task.AssignedToId);
-
-            //var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            //if (assignedToUser == null)
+            //if (string.IsNullOrWhiteSpace(task.Title) || string.IsNullOrWhiteSpace(task.Description))
             //{
-            //    return BadRequest("AssignedTo user not found.");
+            //    return BadRequest("Title and Description are required.");
+            //} 
+            //if (task.AssignedFromId == 0)
+            //{
+            //    return BadRequest("AssignedFromId is required.");
             //}
 
-            //// Populate task with the users (AssignedFrom and AssignedTo)
-            task.AssignedFrom = assignedFromUser;
-            //task.AssignedTo = assignedToUser;
+            ////if (task.AssignedToId == 0)
+            ////{
+            ////    return BadRequest("AssignedToId is required.");
+            ////}
 
-            // Set CreatedDate and DueDate if not already set
-            if (task.CreatedDate == null)
-            {
-                task.CreatedDate = DateTime.UtcNow;
-            }
+            //// Check if the admin user with AssignedFromId exists
+            //if (task.AssignedFromId != null  )
+            //{
+            //      assignedFromUser = await _context.UserModels
+            //                                     .Where(u => u.UserId == task.AssignedFromId && u.Role == "Admin")
+            //                                     .FirstOrDefaultAsync();
+            //}
            
-            if (task.DueDate == default)
-            {
-                task.DueDate = DateTime.UtcNow.AddDays(7); // Example: Set default due date to 7 days from now
-            }
+
+            //if (assignedFromUser == null)
+            //{
+            //    return BadRequest("AssignedFrom user (admin) not found.");
+            //} 
+            //task.AssignedFrom = assignedFromUser; 
+            //// Set CreatedDate and DueDate if not already set
+            //if (task.CreatedDate == null)
+            //{
+            //    task.CreatedDate = DateTime.UtcNow;
+            //}
+           
+            //if (task.DueDate == default)
+            //{
+            //    task.DueDate = DateTime.UtcNow.AddDays(7);  
+            //}
              
-            _context.Tasks.Add(task);
-            await _context.SaveChangesAsync();
+            //if(task.Status == null)
+            //{
+            //    task.Status = "Pending";
+            //}
+            //_context.Tasks.Add(task);
+            //await _context.SaveChangesAsync();
              
-            return CreatedAtAction(nameof(CreateTask), new { id = task.Id }, task);
+            //return CreatedAtAction(nameof(CreateTask), new { id = task.Id }, task);
         }
 
         [HttpPut("updateTask")]
@@ -112,38 +103,52 @@ namespace EmployeeTaskManagement.Controllers
             {
                 return BadRequest("Task data is required.");
             }
-             
-            var task = await _context.Tasks.Where(t => t.Id == id).FirstOrDefaultAsync();
-            if (task == null)
+            try
             {
-                return NotFound(new { message = "Task not found" });  
+                var updatedTask = await _taskService.UpdateTaskAsync(id, taskUpdate);
+                return Ok(new { message = "Task updated successfully", updatedTask });
             }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });   
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal server error. Please try again later.");
+            }
+            //var task = await _context.Tasks.Where(t => t.Id == id).FirstOrDefaultAsync();
+            //if (task == null)
+            //{
+            //    return NotFound(new { message = "Task not found" });  
+            //}
              
-            task.Title = taskUpdate.Title ?? task.Title;   
-            task.Description = taskUpdate.Description ?? task.Description;
-            task.Status = taskUpdate.Status ?? task.Status;
-            task.AssignedFromId = taskUpdate.AssignedFromId ?? task.AssignedFromId;
-            task.AssignedToId = taskUpdate.AssignedToId ?? task.AssignedToId;
+            //task.Title = taskUpdate.Title ?? task.Title;   
+            //task.Description = taskUpdate.Description ?? task.Description;
+            //task.Status = taskUpdate.Status ?? task.Status;
+            //task.AssignedFromId = taskUpdate.AssignedFromId ?? task.AssignedFromId;
+            //task.AssignedToId = taskUpdate.AssignedToId ?? task.AssignedToId;
              
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Task updated successfully", task });
+            //return Ok(new { message = "Task updated successfully", task });
         }
 
         [HttpDelete("DeleteTask")]
         public async Task<IActionResult> DeleteTask(int id)
-        { 
-            var task = await _context.Tasks.FindAsync(id);
-
-            if (task == null)
+        {
+            try
             {
-                return NotFound(new { message = "Task not found" });  
-            } 
-            _context.Tasks.Remove(task);
-             
-            await _context.SaveChangesAsync();
-
-            return Ok("successfully deleted");
+                var deletedTask = await _taskService.DeleteTaskAsync(id);
+                return Ok(new { message = "Task successfully deleted", deletedTask });
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });   
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal server error. Please try again later.");
+            }
         }
     }
 }

@@ -9,6 +9,10 @@ using EmployeeTaskManagement.DbContext;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using EmployeeTaskManagement.CommonService;
+using EmployeeTaskManagement.Services.UserService;
+using EmployeeTaskManagement.Repository.UserRepo;
+using EmployeeTaskManagement.Services.TaskService;
+using EmployeeTaskManagement.Repository.TaskRepo;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,36 +68,7 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"])),         
     };
 });
-
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidIssuer = builder.Configuration["JWT:Issuer"],
-//            ValidateAudience = true,
-//            ValidAudience = builder.Configuration["JWT:Audience"],
-//            ValidateLifetime = true,
-//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecretKey"])),
-//            ValidateIssuerSigningKey = true
-//        };
-//        options.Events = new JwtBearerEvents
-//        {
-//            OnAuthenticationFailed = context =>
-//            {
-//                Console.WriteLine($"Authentication failed: {context.Exception.Message}"); // Logging for debugging
-//                return Task.CompletedTask;
-//            },
-//            OnTokenValidated = context =>
-//            {
-//                Console.WriteLine("Token validated successfully"); // Debug log
-//                return Task.CompletedTask;
-//            }
-//        };
-//    });
-
-//builder.Services.ConfigureCustomServices();
+ 
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
@@ -102,7 +77,10 @@ builder.Services.AddAuthorization(options =>
 //builder.Services.AddAuthorization();
 builder.Services.AddScoped<SeedRoleService>();
 
- 
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRepo,UserRepo>();
+builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ITaskRepo , TaskRepo>();
 
 
 var app = builder.Build();
