@@ -11,7 +11,7 @@ namespace EmployeeTaskManagement.Services.UserService
     {
         private readonly IUserRepo  _iUserRepo;
 
-        public UserService(IUserRepo iUserRepo )
+        public UserService(IUserRepo iUserRepo)
         {
             _iUserRepo = iUserRepo;
         }

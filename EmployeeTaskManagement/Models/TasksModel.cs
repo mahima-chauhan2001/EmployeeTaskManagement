@@ -18,11 +18,4 @@ namespace EmployeeTaskManagement.Models
         public DateTime CreatedDate { get; set; }
         public DateTime DueDate { get; set; }
     }
-}
-//var tasksAssignedToUser = context.Tasks
-//    .Where(t => t.AssignedToId == userId)  // Get tasks where user is the assignee
-//    .ToList();
-
-//var tasksAssignedByUser = context.Tasks
-//    .Where(t => t.AssignedFromId == userId)  // Get tasks where user is the one who assigned the task
-//    .ToList();
+} 
